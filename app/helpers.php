@@ -66,6 +66,17 @@ if (!function_exists('hasPermissionTo')) {
 	}
 }
 
+if (!function_exists('hasAccessToModule')) {
+	function hasAccessToModule($module_ref)
+	{
+		if (!\Auth::check()) return false;
+		$user = \Auth::user();
+		if ($user->hasRole(["super-admin"])) return true;
+		$module_ref = trim($module_ref);
+		return $user->canAccessModule($module_ref);
+	}
+}
+
 if (!function_exists('mysql_json_like')) {
 	function mysql_json_like($column, $value)
 	{

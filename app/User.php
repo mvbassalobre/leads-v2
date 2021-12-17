@@ -110,4 +110,9 @@ class User extends Authenticatable
 	{
 		return @$this->roles()->first()->id;
 	}
+
+	public function canAccessModule($module_ref)
+	{
+		return $this->polo->enabled_modules()->where("ref", $module_ref)->count() > 0;
+	}
 }

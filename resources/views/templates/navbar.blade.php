@@ -1,6 +1,17 @@
 @php
 $user = Auth::user();
 
+function getMenuModuleClass($module_name, $array_current = [])
+{
+    $class = 'dropdown-item ' . currentClass($array_current);
+    $permission_value = hasAccessToModule($module_name);
+    if (!$permission_value) {
+        $class .= ' disabled ';
+    }
+    return $class;
+}
+
+
 function currentClass($routes)
 {
     $routes = is_array($routes) ? $routes : [$routes];
@@ -108,6 +119,19 @@ if(!$is_super_admin) {
                     <a class="dropdown-item {{ getMenuClass($is_admin_or_super_admin, ['/admin/integracoes/*']) }}" href="/admin/integradores"
                         data-label="Usuários de Acesso a API">
                         Integradores
+                    </a>
+                </div>
+            </li>
+            <li
+                class="nav-item dropdown {{ currentClass(['/admin/whatsapp/*']) }}">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                    aria-expanded="false">
+                    <i class="el-icon-message mr-2"></i>Comunicação
+                </a>
+                <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <a class="dropdown-item {{  getMenuModuleClass('whatsapp-sender',['/admin/whatsapp/*']) }}" href="/admin/whatsapp"
+                        data-label="Envio de mensagens">
+                        Whatsapp
                     </a>
                 </div>
             </li>
