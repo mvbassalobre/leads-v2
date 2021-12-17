@@ -144,13 +144,17 @@ class WebhookController extends Controller
 		if (in_array("direct_script", $sources)) {
 			$city = $this->getRequestCity($request);
 			$processed_city = mb_convert_encoding(strtolower(preg_replace('/\s+/', '', $city["complete"])), "EUC-JP", "auto");
-			$polo = Polo::whereRaw("(convert(replace(lower(json_unquote(json_extract(data,'$.city'))),' ','') USING ASCII) = '$processed_city' and json_unquote(json_extract(data,'$.head')) = 'false')")->first();
-			if ($polo) {
-				$only_city = $city['city'];
-				$only_state = $city['state'];
-				$indexes = "['city']=>$only_city|['state']=>$only_state";
-				$setting = $this->makeWebhookSettings($webhook, $indexes, $polo->id);
-				return $this->createLeadWithSetting($request, $webhook, $setting, $lead_id);
+			try {
+				$polo = Polo::whereRaw("(convert(replace(lower(json_unquote(json_extract(data,'$.city'))),' ','') USING ASCII) = '$processed_city' and json_unquote(json_extract(data,'$.head')) = 'false')")->first();
+				if ($polo) {
+					$only_city = $city['city'];
+					$only_state = $city['state'];
+					$indexes = "['city']=>$only_city|['state']=>$only_state";
+					$setting = $this->makeWebhookSettings($webhook, $indexes, $polo->id);
+					return $this->createLeadWithSetting($request, $webhook, $setting, $lead_id);
+				}
+			} catch (\Exception $e) {
+				return false;
 			}
 		}
 
