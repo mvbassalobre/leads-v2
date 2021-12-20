@@ -1,43 +1,44 @@
 <template>
     <div>
-        <h1>Wpp - Sender</h1>
+        <button @click="test">Testar</button>
     </div>
 </template>
 <script>
-// import Venom from "venom-bot";
+import io from "socket.io-client";
 
 export default {
     data() {
         return {
-            webservice: "http://localhost:3000/api",
-            session: {
-                WABrowserId: '"OlpPuvJHHK6YDwl8d1g1lg=="',
-                WASecretBundle:
-                    '{"key":"rJSDK3Sg/2GlQkd+gwIY0+KAUYJy4wxf8H0SdXIiVoY=","encKey":"DI18+e6IN8Epd72YbzJWDkJTXsM5E7nm0wyknIetOJ4=","macKey":"rJSDK3Sg/2GlQkd+gwIY0+KAUYJy4wxf8H0SdXIiVoY="}',
-                WAToken1: '"yAuNc02EP4uyi7/GOSxybDGfJe5wSIE1WbBScp2C9jI="',
-                WAToken2: '"1@KMQsUZWae6N3uPPBGIwdSqKWPLnFV8zeOiU+gaM5inJDi9+5eczguQaQO0qT2K9xhiDa5n8GhH9HpA=="',
-            },
-            phone_number: "5514996766177@c.us",
-            buttons: [
-                {
-                    buttonText: {
-                        displayText: "Opção 1",
-                    },
-                },
-                {
-                    buttonText: {
-                        displayText: "Opção 2",
-                    },
-                },
-            ],
+            socket: null,
         };
     },
     created() {
-        this.initSender();
+        this.init();
     },
     methods: {
-        initSender() {
-            console.log("venom");
+        init() {
+            this.socket = io("http://localhost:3000", {
+                reconnection: true,
+                reconnectionDelay: 500,
+                reconnectionAttempts: 10,
+            });
+            this.socket.on("connect", () => {
+                console.log(`connect ${this.socket.id}`);
+            });
+
+            this.socket.on("disconnect", () => {
+                console.log("disconnect");
+            });
+
+            this.socket.on("test-socket", () => {
+                console.log("teste");
+            });
+            console.log("init ...", this.socket);
+        },
+        test() {
+            this.socket.emit("test-connected-user", (data) => {
+                console.log(data);
+            });
         },
     },
 };

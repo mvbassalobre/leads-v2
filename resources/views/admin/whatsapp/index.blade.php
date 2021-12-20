@@ -18,5 +18,5 @@
 </div>
 @endsection
 @section('content')
-<h1>Whatsapp Sender Aqui</h1>
+<whatsapp-sender></whatsapp-sender>
 @endsection

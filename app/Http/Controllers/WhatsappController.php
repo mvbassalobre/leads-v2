@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Auth;
+use Illuminate\Http\Request;
+use App\Events\LikeEvent;
 
 class WhatsappController extends Controller
 {
