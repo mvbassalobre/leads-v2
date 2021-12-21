@@ -1,21 +1,24 @@
 <template>
     <div class="d-flex flex-column">
-        <div v-if="!action || action == 'logged'">
-            <button @click="startOrClose">
-                {{ action ? "Fechar Conexão" : "Abrir Conexão" }}
-            </button>
-        </div>
-        <template v-if="action == 'loading'"> Carregando ... </template>
-        <template v-if="action == 'show_qr_code'">
-            <div>
-                <img class="mt-4" :src="qr_code.base64Qrimg" />
+        <template v-if="!connection.socket_status">Conectando ao socket ...</template>
+        <template v-else>
+            <div v-if="!action || action == 'logged'">
+                <button @click="startOrClose">
+                    {{ action ? "Fechar Conexão com Webservice" : "Conectar Webservice" }}
+                </button>
             </div>
-        </template>
-        <template v-if="action == 'logged'">
-            <h1>Usuário Logado</h1>
-            <input v-model="message.phone_number" placeholder="Número do telefone" />
-            <textarea v-model="message.body" />
-            <button @click="sendMessage">Enviar</button>
+            <template v-if="action == 'loading'"> Carregando ... </template>
+            <template v-if="action == 'show_qr_code'">
+                <div>
+                    <img class="mt-4" :src="qr_code.base64Qrimg" />
+                </div>
+            </template>
+            <template v-if="action == 'logged'">
+                <h1>Usuário Logado</h1>
+                <input v-model="message.phone_number" placeholder="Número do telefone" />
+                <textarea v-model="message.body" />
+                <button @click="sendMessage">Enviar</button>
+            </template>
         </template>
     </div>
 </template>
@@ -25,10 +28,15 @@ import io from "socket.io-client";
 export default {
     data() {
         return {
+            connection: {
+                id: null,
+                socket_status: false,
+            },
             socket: null,
             action: null,
             qr_code: {},
             // token: null,
+            session_id: "celular-vinicius",
             token: {
                 WABrowserId: '"Zf4PxDjUuhJJ6Zlq72+exg=="',
                 WASecretBundle:
@@ -44,6 +52,10 @@ export default {
     },
     created() {
         this.init();
+        window.addEventListener("beforeunload", () => {
+            this.socket.emit("close-connection", { session_id: this.session_id });
+            return;
+        });
     },
     methods: {
         init() {
@@ -53,22 +65,27 @@ export default {
                 reconnectionAttempts: 10,
             });
 
-            this.socket.on("connect", () => {
-                console.log(`connect ${this.socket.id}`);
+            this.socket.on("connected", (data) => {
+                this.connection.id = data.id;
+                this.connection.socket_status = true;
+                this.action = null;
             });
 
             this.socket.on("disconnect", () => {
+                this.connection.id = null;
+                this.connection.socket_status = false;
                 this.action = null;
-                console.log("disconnect ...");
             });
         },
         startOrClose() {
             if (this.action) {
                 this.action = null;
-                return this.socket.emit("close-connection");
+                return this.socket.emit("close-connection", { session_id: this.session_id });
             }
+
             this.action = "loading";
-            this.socket.emit("start-engine", { token: this.token });
+
+            this.socket.emit("start-engine", { session_id: this.session_id, token: this.token });
 
             this.socket.on("qr-generated", (data) => {
                 this.qr_code = data;
