@@ -53,7 +53,7 @@ export default {
     created() {
         this.init();
         window.addEventListener("beforeunload", () => {
-            this.socket.emit("close-connection", { session_id: this.session_id });
+            this.socket.emit("close-connection", { session_id: this.session_id, id: this.connection.id });
             return;
         });
     },
@@ -66,6 +66,7 @@ export default {
             });
 
             this.socket.on("connected", (data) => {
+                console.log(data);
                 this.connection.id = data.id;
                 this.connection.socket_status = true;
                 this.action = null;
@@ -76,16 +77,10 @@ export default {
                 this.connection.socket_status = false;
                 this.action = null;
             });
-        },
-        startOrClose() {
-            if (this.action) {
-                this.action = null;
-                return this.socket.emit("close-connection", { session_id: this.session_id });
-            }
 
-            this.action = "loading";
-
-            this.socket.emit("start-engine", { session_id: this.session_id, token: this.token });
+            this.socket.on("session-conflict", () => {
+                alert("Sessão já iniciada");
+            });
 
             this.socket.on("qr-generated", (data) => {
                 this.qr_code = data;
@@ -102,15 +97,9 @@ export default {
                 this.action = "logged";
                 this.token = data.token;
             });
-        },
-        sendMessage() {
-            this.socket.emit("send-message", {
-                phone_number: this.message.phone_number,
-                body: this.message.body,
-            });
 
             this.socket.on("sent-message", () => {
-                alert("Mensagem enviada !!");
+                console.log("Mensagem enviada !!");
                 Object.keys(this.message).map((key) => {
                     this.message[key] = null;
                 });
@@ -118,6 +107,23 @@ export default {
 
             this.socket.on("message-failed", (er) => {
                 console.log(er);
+            });
+        },
+        startOrClose() {
+            if (this.action) {
+                this.action = null;
+                return this.socket.emit("close-connection", { session_id: this.session_id });
+            }
+
+            this.action = "loading";
+
+            this.socket.emit("start-engine", { session_id: this.session_id, token: this.token });
+        },
+        sendMessage() {
+            this.socket.emit("send-message", {
+                phone_number: this.message.phone_number,
+                body: this.message.body,
+                session_id: this.session_id,
             });
         },
     },
